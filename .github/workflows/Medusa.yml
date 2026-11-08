@@ -1,0 +1,126 @@
+name: Build n Release Medusa Package
+
+env:
+  REPO_NAME: "Syno_Medusa"
+  SPK_PREFIX: "Medusa"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-spk:
+    name: Build Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get release tag
+        id: get_latest_tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "new_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            # Get most recent release including pre-releases
+            response=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/007revad/${REPO_NAME}/releases?per_page=1")
+            latest_tag=$(echo "$response" | jq -r 'if type == "array" then .[0].tag_name // empty else empty end')
+            if [ -z "$latest_tag" ]; then
+              echo "ERROR: Could not determine release tag. API response:" >&2
+              echo "$response" >&2
+              exit 1
+            fi
+            echo "new_tag=$latest_tag" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if SPK already exists in release
+        id: check_assets
+        run: |
+          existing=$(curl -s "https://api.github.com/repos/007revad/${REPO_NAME}/releases/tags/${{ steps.get_latest_tag.outputs.new_tag }}" \
+            | jq -r '.assets[].name' | grep -c '\.spk' || true)
+          echo "spk_count=$existing" >> $GITHUB_OUTPUT
+
+      # Medusa is pure Python so one package works on every architecture.
+      # Build for kvmx64 then change INFO to noarch.
+      - name: Synology Package Builder Github Action
+        if: steps.check_assets.outputs.spk_count == '0'
+        uses: 007revad/synology-package-builder@main
+        with:
+          dsm: '7.0'
+          arch: 'kvmx64'
+          output: ./dist
+
+      - name: Make package noarch and rename
+        if: steps.check_assets.outputs.spk_count == '0'
+        run: |
+          set -euo pipefail
+          rm -f ./dist/*_debug.spk
+          spk=$(ls ./dist/*.spk | head -n1)
+          tmpdir=$(mktemp -d)
+          tar -xf "$spk" -C "$tmpdir"
+          sed -i 's/^arch=".*"/arch="noarch"/' "$tmpdir/INFO"
+          # Settings the package builder has no package.json key for
+          grep -q '^adminport=' "$tmpdir/INFO" || echo 'adminport="8897"' >> "$tmpdir/INFO"
+          grep -q '^adminprotocol=' "$tmpdir/INFO" || echo 'adminprotocol="http"' >> "$tmpdir/INFO"
+          grep -q '^checkport=' "$tmpdir/INFO" || echo 'checkport="no"' >> "$tmpdir/INFO"
+          # Git is needed to clone and update Medusa
+          if grep -q '^install_dep_packages=' "$tmpdir/INFO"; then
+            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31"/' "$tmpdir/INFO"
+          else
+            echo 'install_dep_packages="git>=2.31"' >> "$tmpdir/INFO"
+          fi
+          grep -q '^arch="noarch"$' "$tmpdir/INFO" || { echo "::error::arch not set to noarch"; exit 1; }
+          grep -q '^adminport="8897"$' "$tmpdir/INFO" || { echo "::error::adminport not set"; exit 1; }
+          grep -q '^install_dep_packages="git>=2.31"$' "$tmpdir/INFO" || { echo "::error::install_dep_packages not set"; exit 1; }
+          cat "$tmpdir/INFO"
+          version="${{ steps.get_latest_tag.outputs.new_tag }}"
+          out="./dist/${SPK_PREFIX}-${version}-noarch-DSM-7.x.spk"
+          rm -f ./dist/*.spk
+          tar -cf "$out" -C "$tmpdir" $(ls "$tmpdir")
+          rm -rf "$tmpdir"
+          ls -l ./dist
+
+      - name: Upload Package
+        if: steps.check_assets.outputs.spk_count == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SPK_PREFIX }}-noarch-DSM-7.x
+          path: ./dist/*.spk
+
+      - name: Release
+        if: steps.check_assets.outputs.spk_count == '0'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_latest_tag.outputs.new_tag }}
+          make_latest: false
+          fail_on_unmatched_files: false
+          files: |
+            ./dist/*.spk
+
+  notify-spkrepo:
+    runs-on: ubuntu-latest
+    needs: [build-spk]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Trigger spkrepo index rebuild
+        run: |
+          curl -fsSL \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SYNC_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            https://api.github.com/repos/007revad/007revad.github.io/dispatches \
+            --data '{
+              "event_type": "spk-release",
+              "client_payload": {
+                "repo":    "${{ github.repository }}",
+                "tag":     "${{ github.event.release.tag_name }}"
+              }
+            }'

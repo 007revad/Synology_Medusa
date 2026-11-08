@@ -1,0 +1,10 @@
+#!/bin/sh
+# If we upgrade from a pre DSM 7 version of the package we save the database, config and cache.
+if [ "${SYNOPKG_OLD_PKGVER%%.*}" -lt 2 ]
+then
+  # we don't want to save the sources so we remove that folder.
+  printf "%s %s\tupgrade %s Save the pre DSM 7 database and config\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
+  rm -rf "${SYNOPKG_PKGDEST}"/var/src
+  mv -f "${SYNOPKG_PKGDEST}"/var/*.* "${SYNOPKG_TEMP_UPGRADE_FOLDER}"
+fi
+exit 0

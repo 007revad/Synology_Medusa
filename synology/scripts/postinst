@@ -1,0 +1,35 @@
+#!/bin/sh
+# Medusa is cloned from GitHub so Medusa's own "Update Now" works.
+REPOSITORY="https://github.com/pymedusa/Medusa.git"
+LOCATION="${SYNOPKG_PKGDEST}/src"
+CONFIGFILE="${SYNOPKG_PKGVAR}/config.ini"
+GIT="/var/packages/git/target/bin/git"
+STAMP="$(date +"%Y/%m/%d %T") ${SYNOPKG_PKGNAME}"
+
+[ -x "$GIT" ] || GIT=$(command -v git)
+if [ -z "$GIT" ]; then
+  printf "%s\tinstall %s Git is not installed\n" "$STAMP" "${SYNOPKG_PKGVER}"
+  printf "<br>Git is not installed. Please install the Git Server package then try again." > "${SYNOPKG_TEMP_LOGFILE}"
+  exit 3
+fi
+
+if [ ! -d "${LOCATION}/.git" ]; then
+  rm -rf "${LOCATION}"
+  printf "%s\tinstall %s Cloning %s to %s\n" "$STAMP" "${SYNOPKG_PKGVER}" "${REPOSITORY}" "${LOCATION}"
+  if ! "$GIT" clone --quiet --branch master "${REPOSITORY}" "${LOCATION}" 2> "${SYNOPKG_TEMP_LOGFILE}"; then
+    printf "%s\tinstall %s Failed to clone %s\n" "$STAMP" "${SYNOPKG_PKGVER}" "${REPOSITORY}"
+    printf "<br>Failed to clone the github repository: %s" "${REPOSITORY}" >> "${SYNOPKG_TEMP_LOGFILE}"
+    exit 3
+  fi
+fi
+
+read -r VERSION < "${LOCATION}/CHANGELOG.md"
+printf "%s\tinstall %s Installed Medusa version: %s\n" "$STAMP" "${SYNOPKG_PKGVER}" "${VERSION#\#\# }"
+
+# Create some defaults in config.ini, but never overwrite an existing one
+if [ ! -f "${CONFIGFILE}" ]; then
+  printf "[General]\nweb_port = %s\n[TORRENT]\ntorrent_username = admin\n" "${SYNOPKG_PKGPORT}" > "${CONFIGFILE}"
+fi
+
+printf "<br>%s version: %s installed successfully" "${SYNOPKG_PKGNAME}" "${VERSION#\#\# }" > "${SYNOPKG_TEMP_LOGFILE}"
+exit 0

@@ -1,2 +1,9 @@
-v1.0.0
-- First release.
+v2.5.0
+- First release of 007revad's Medusa package. Replaces BenjV's Medusa package and keeps your existing config, database and cache.
+- Medusa is cloned from GitHub, so Medusa's "Update Now" keeps working.
+- Bug fix for "Sorry, requires Python 3.10 and above". The newest installed Python that meets Medusa's minimum version is now used (Python 3.9 is no longer picked).
+- Bug fix for Medusa's web UI "Restart" and "Update Now" hanging on "Performing Restart". Medusa is now run by a small supervisor, which picks the Python again each time Medusa restarts.
+- Medusa's "Shutdown" button now restarts Medusa instead of stopping it. Use Package Center to stop Medusa.
+- Package Center no longer shows a "Send Term signal to package" message when stopping Medusa.
+- The supervisor's log is saved in the package's var folder as supervisor.log.
+- Upgrading the package no longer deletes Medusa's data when uninstalling the old version.

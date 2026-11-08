@@ -1,0 +1,15 @@
+{ ".url": {
+  "com.007revad.medusa": {
+    "title": "Medusa",
+    "desc": "Medusa is an automatic Video Library Manager for TV Shows",
+    "icon": "images/medusa-{0}.png",
+    "type": "url",
+    "protocol": "http",
+    "port": "8897",
+    "url": "/",
+    "allUsers": true,
+    "grantPrivilege": "all",
+    "advanceGrantPrivilege": true
+    }
+  }
+}

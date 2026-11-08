@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ "${SYNOPKG_OLD_PKGVER%%.*}" -lt 2 ]
+then
+  printf "%s %s\tupgrade %s Restore the potential data from pre DSM 7 packages\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
+  mv -f "${SYNOPKG_TEMP_UPGRADE_FOLDER}"/* "${SYNOPKG_PKGVAR}"
+fi
+exit 0

@@ -1,0 +1,301 @@
+#!/bin/sh
+# Medusa start-stop-status
+#
+# start   Picks the newest installed Python that meets Medusa's minimum
+#         version (requires-python in src/pyproject.toml), then starts a
+#         small supervisor that runs Medusa.
+#
+# The supervisor runs Medusa with no_restart = 1, so when Medusa exits
+# (web UI "Restart" or "Update Now") Medusa does not spawn itself with
+# the old interpreter. The supervisor launches it again and picks the
+# Python again, so an update that raises the minimum Python version is
+# handled. The supervisor's pid is the package pid, so it stays the same
+# across Medusa restarts and DSM never sees the package as stopped.
+
+PKGS_DIR="/var/packages"
+PIDFILE="${SYNOPKG_PKGVAR}/${SYNOPKG_PKGNAME}.pid"      # supervisor pid
+CHILDFILE="${SYNOPKG_PKGVAR}/${SYNOPKG_PKGNAME}.child"  # Medusa pid
+SUPLOG="${SYNOPKG_PKGVAR}/supervisor.log"
+CONFIG="${SYNOPKG_PKGVAR}/config.ini"
+SRC="${SYNOPKG_PKGDEST}/src"
+STARTMODULE="${SRC}/start.py"
+TIMEOUT=30           # Seconds to wait for Medusa to shut down
+MIN_RUN=15           # Exiting sooner than this counts as a failed start
+MAX_FAILS=5          # Give up after this many failed starts in a row
+DEFAULT_MIN="3 10"   # Used if pyproject.toml has no requires-python
+
+log() {
+  printf '%s %s\n' "$(date '+%Y/%m/%d %T')" "$*" >> "$SUPLOG" 2>/dev/null
+}
+
+# Prints "MAJOR MINOR" of the Python version Medusa requires
+min_python() {
+  v=$(sed -n 's/^requires-python[[:space:]]*=[[:space:]]*"[^0-9]*\([0-9][0-9]*\)\.\([0-9][0-9]*\).*/\1 \2/p' \
+        "${SRC}/pyproject.toml" 2>/dev/null | head -n 1)
+  if [ -n "$v" ]; then echo "$v"; else echo "$DEFAULT_MIN"; fi
+}
+
+# Sets PYTHON and PY_VER to the newest installed Python 3 that meets the
+# minimum version. Returns 1 if there isn't one, and then sets MIN_VER and
+# HIGHEST_VER for the error message (HIGHEST_VER is empty if none found).
+pick_python() {
+  set -- $(min_python)
+  MIN_MAJOR=$1
+  MIN_MINOR=$2
+  MIN_VER="${MIN_MAJOR}.${MIN_MINOR}"
+  PYTHON=""
+  PY_VER=""
+  HIGHEST_VER=""
+  best_minor=-1
+  best_path=""
+
+  candidates=""
+  for name in python3 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 python3.15 python3.16; do
+    found=$(command -v "$name" 2>/dev/null) && candidates="$candidates $found"
+  done
+
+  for cand in "${PKGS_DIR}"/*/target/bin/python3.* \
+              "${PKGS_DIR}"/*/target/usr/bin/python3.* \
+              $candidates; do
+    # Only python3.N, not python3.N-config and similar
+    case "${cand##*/}" in
+      python3|python3.[0-9]|python3.[0-9][0-9]) ;;
+      *) continue ;;
+    esac
+    [ -x "$cand" ] || continue
+    # Ask the interpreter, don't trust the file name
+    ver=$("$cand" -c 'import sys; print("%d %d" % sys.version_info[:2])' 2>/dev/null) || continue
+    set -- $ver
+    [ "$1" = "3" ] || continue
+    [ -n "$2" ] || continue
+    if [ "$2" -gt "$best_minor" ]; then
+      best_minor=$2
+      best_path=$cand
+    fi
+  done
+
+  [ -n "$best_path" ] && HIGHEST_VER="3.${best_minor}"
+  if [ -n "$best_path" ] && [ "$MIN_MAJOR" -le 3 ] && [ "$best_minor" -ge "$MIN_MINOR" ]; then
+    PYTHON=$best_path
+    PY_VER="3.${best_minor}"
+    return 0
+  fi
+  return 1
+}
+
+python_error_message() {
+  if [ -n "$HIGHEST_VER" ]; then
+    echo "Medusa requires Python ${MIN_VER} or newer but the highest installed is Python ${HIGHEST_VER}. Install a newer Python package then start Medusa again."
+  else
+    echo "Medusa requires Python ${MIN_VER} or newer but no Python 3 was found. Install a Python package then start Medusa again."
+  fi
+}
+
+# Make sure the port number is right, and Medusa does not restart itself
+prepare_config() {
+  [ -f "$CONFIG" ] || return 0
+  sed -i "/\<web_port/s/=.*/= ${SYNOPKG_PKGPORT}/" "$CONFIG"
+  if grep -q '^no_restart' "$CONFIG"; then
+    sed -i 's/^no_restart.*/no_restart = 1/' "$CONFIG"
+  else
+    sed -i '/^\[General\]/a no_restart = 1' "$CONFIG"
+  fi
+}
+
+# Is the pid in file $1 a running process?
+pid_running() {
+  [ -r "$1" ] || return 1
+  read -r p 2> /dev/null < "$1"
+  [ -n "$p" ] && kill -0 "$p" 2> /dev/null
+}
+
+supervise() {
+  echo $$ > "$PIDFILE"
+  STOP=0
+  CHILD=""
+  FAILS=0
+  trap '' HUP
+  trap 'STOP=1; [ -n "$CHILD" ] && kill -TERM "$CHILD" 2> /dev/null' TERM INT
+
+  while [ "$STOP" -eq 0 ]
+  do
+    if ! pick_python
+    then
+      log "ERROR: $(python_error_message)"
+      break
+    fi
+    prepare_config
+    log "Starting Medusa with ${PYTHON} (Python ${PY_VER}, minimum ${MIN_VER})"
+    START=$(date +%s)
+    env LANG=en_US.UTF-8 "${PYTHON}" "${STARTMODULE}" -q --nolaunch \
+      --datadir="${SYNOPKG_PKGVAR}" --port="${SYNOPKG_PKGPORT}" \
+      < /dev/null >> "$SUPLOG" 2>&1 &
+    CHILD=$!
+    echo "$CHILD" > "$CHILDFILE"
+    wait "$CHILD"
+    # wait returns early when a signal is trapped, so make sure Medusa has
+    # really gone, and force it down if it takes too long
+    COUNT=0
+    while kill -0 "$CHILD" 2> /dev/null
+    do
+      COUNT=$((COUNT+1))
+      if [ $COUNT -gt $TIMEOUT ]
+      then
+        log "Medusa did not shut down in ${TIMEOUT} seconds, killing it"
+        kill -9 "$CHILD" 2> /dev/null
+        break
+      fi
+      sleep 1
+    done
+    rm -f "$CHILDFILE"
+    CHILD=""
+    [ "$STOP" -eq 1 ] && break
+
+    RUN=$(( $(date +%s) - START ))
+    if [ "$RUN" -lt "$MIN_RUN" ]
+    then
+      FAILS=$((FAILS+1))
+      log "Medusa exited after ${RUN} seconds (failed start ${FAILS} of ${MAX_FAILS})"
+      if [ "$FAILS" -ge "$MAX_FAILS" ]
+      then
+        log "ERROR: Medusa keeps exiting, giving up. See the messages above."
+        break
+      fi
+      sleep 3
+    else
+      FAILS=0
+      log "Medusa exited after ${RUN} seconds, starting it again"
+      sleep 1
+    fi
+  done
+
+  log "Supervisor stopped"
+  rm -f "$PIDFILE" "$CHILDFILE"
+  exit 0
+}
+
+launch_supervisor() {
+  if command -v setsid > /dev/null 2>&1
+  then
+    setsid "$0" supervise < /dev/null > /dev/null 2>&1 &
+  else
+    "$0" supervise < /dev/null > /dev/null 2>&1 &
+  fi
+}
+
+force_kill() {
+  for f in "$PIDFILE" "$CHILDFILE"
+  do
+    if [ -r "$f" ]
+    then
+      read -r p 2> /dev/null < "$f"
+      [ -n "$p" ] && kill -9 "$p" 2> /dev/null
+    fi
+  done
+  rm -f "$PIDFILE" "$CHILDFILE"
+}
+
+case "$1" in
+  supervise)
+    # Internal: run by the start action
+    supervise
+  ;;
+  start)
+    if pid_running "$PIDFILE"
+    then
+      echo "${SYNOPKG_PKGNAME} is already running"
+      exit 0
+    fi
+    # A pidfile or Medusa left behind by a crash or an older package version
+    force_kill
+
+    if ! pick_python
+    then
+      python_error_message
+      python_error_message > "$SYNOPKG_TEMP_LOGFILE"
+      exit 3
+    fi
+    echo "Starting ${SYNOPKG_PKGNAME} with ${PYTHON} (Python ${PY_VER})"
+
+    # Keep the last 200 lines of the previous log
+    if [ -f "$SUPLOG" ]
+    then
+      tail -n 200 "$SUPLOG" > "${SUPLOG}.tmp" 2> /dev/null && mv -f "${SUPLOG}.tmp" "$SUPLOG"
+    fi
+    launch_supervisor
+
+    # Wait for the supervisor's pidfile
+    COUNT=0
+    while [ ! -e "$PIDFILE" ]
+    do
+      COUNT=$((COUNT+1))
+      if [ $COUNT -gt $TIMEOUT ]
+      then
+        printf "Package did not start within %s seconds" "$TIMEOUT" > "$SYNOPKG_TEMP_LOGFILE"
+        exit 3
+      fi
+      sleep 1
+    done
+
+    # Medusa exits straight away if it can't run, so check it's still up
+    sleep 6
+    if pid_running "$PIDFILE" && pid_running "$CHILDFILE"
+    then
+      exit 0
+    fi
+    force_kill
+    printf "Package would not start! See: %s and /var/log/packages/%s.log" "$SUPLOG" "${SYNOPKG_PKGNAME}" > "$SYNOPKG_TEMP_LOGFILE"
+    exit 3
+  ;;
+  stop)
+    if [ ! -e "$PIDFILE" ]
+    then
+      echo "No pidfile, so process is not running"
+      # Medusa left behind without its supervisor
+      force_kill
+      exit 0
+    fi
+    if ! pid_running "$PIDFILE"
+    then
+      echo "Pidfile present, but process not, so remove pidfile"
+      force_kill
+      exit 0
+    fi
+    echo "Send Term signal to package"
+    read -r PID < "$PIDFILE"
+    # The supervisor passes the signal on to Medusa and waits for it
+    kill -15 "$PID" 2> /dev/null
+    COUNT=0
+    while [ -e "$PIDFILE" ]
+    do
+      COUNT=$((COUNT+1))
+      if [ $COUNT -gt $((TIMEOUT+10)) ]
+      then
+        echo "It took too long to gracefully terminate, so we kill the process"
+        force_kill
+        exit 0
+      fi
+      sleep 1
+    done
+    exit 0
+  ;;
+  status)
+    if pid_running "$PIDFILE"
+    then
+      exit 0
+    fi
+    rm -f "$PIDFILE" 2> /dev/null
+    exit 3
+  ;;
+  killall)
+    force_kill
+    exit 0
+  ;;
+  log)
+    exit 0
+  ;;
+  *)
+    exit 1
+  ;;
+esac
+exit 0

@@ -1,0 +1,69 @@
+name: TEST Build Medusa Test Package
+
+env:
+  SPK_PREFIX: "Medusa"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_tag:
+        description: 'Version for this test build (also used to name the downloadable artifact zip - never published)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-spk:
+    name: Build Test Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get test tag
+        id: get_tag
+        run: |
+          test_tag="${{ github.event.inputs.test_tag }}"
+          if [ -z "$test_tag" ]; then
+            test_tag="test-${{ github.run_number }}"
+          fi
+          echo "new_tag=$test_tag" >> $GITHUB_OUTPUT
+
+      - name: Synology Package Builder Github Action
+        uses: 007revad/synology-package-builder@main
+        with:
+          dsm: '7.0'
+          arch: 'kvmx64'
+          output: ./dist
+
+      - name: Make package noarch and rename
+        run: |
+          set -euo pipefail
+          rm -f ./dist/*_debug.spk
+          spk=$(ls ./dist/*.spk | head -n1)
+          tmpdir=$(mktemp -d)
+          tar -xf "$spk" -C "$tmpdir"
+          sed -i 's/^arch=".*"/arch="noarch"/' "$tmpdir/INFO"
+          grep -q '^adminport=' "$tmpdir/INFO" || echo 'adminport="8897"' >> "$tmpdir/INFO"
+          grep -q '^adminprotocol=' "$tmpdir/INFO" || echo 'adminprotocol="http"' >> "$tmpdir/INFO"
+          grep -q '^checkport=' "$tmpdir/INFO" || echo 'checkport="no"' >> "$tmpdir/INFO"
+          if grep -q '^install_dep_packages=' "$tmpdir/INFO"; then
+            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31"/' "$tmpdir/INFO"
+          else
+            echo 'install_dep_packages="git>=2.31"' >> "$tmpdir/INFO"
+          fi
+          cat "$tmpdir/INFO"
+          out="./dist/${SPK_PREFIX}-${{ steps.get_tag.outputs.new_tag }}-noarch-DSM-7.x.spk"
+          rm -f ./dist/*.spk
+          tar -cf "$out" -C "$tmpdir" $(ls "$tmpdir")
+          rm -rf "$tmpdir"
+          ls -l ./dist
+
+      - name: Upload Test Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SPK_PREFIX }}-${{ steps.get_tag.outputs.new_tag }}-noarch-DSM-7.x
+          path: ./dist/*.spk

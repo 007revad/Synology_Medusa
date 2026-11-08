@@ -1,50 +1,45 @@
-# <img src="images/icon.png" width="40"> Heading goes here
+# <img src="images/icon.png" width="40"> Synology Medusa
 
-<a href="https://github.com/007revad/Medusa/releases"><img src="https://img.shields.io/github/release/007revad/Medusa.svg"></a>
-[![Github Releases](https://img.shields.io/github/downloads/007revad/Medusa/total.svg)](https://github.com/007revad/Medusa/releases)
-![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2F007revad%2FMedusa&label=Visitors&icon=github&color=%23198754&message=&style=flat&tz=Australia%2FSydney)
+<a href="https://github.com/007revad/Synology_Medusa/releases"><img src="https://img.shields.io/github/release/007revad/Synology_Medusa.svg"></a>
+[![Github Releases](https://img.shields.io/github/downloads/007revad/Synology_Medusa/total.svg)](https://github.com/007revad/Synology_Medusa/releases)
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2F007revad%2FSynology_Medusa&label=Visitors&icon=github&color=%23198754&message=&style=flat&tz=Australia%2FSydney)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/paypalme/007revad)
 [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/007revad)
 <!--- [![committers.top badge](https://user-badge.committers.top/australia/007revad.svg)](https://user-badge.committers.top/australia/007revad) --->
 
 ### Description
 
-Description goes here
 
-### Download the script
+[Medusa](https://github.com/pymedusa/Medusa) package for Synology DSM 7, which upgrades BenjV's Medusa package.
 
-1. Download the latest version _Source code (zip)_ from https://github.com/007revad/Medusa/releases
-2. Save the download zip file to a folder on the Synology.
-3. Unzip the zip file.
+- Medusa is cloned from GitHub, so Medusa's own **Update Now** works.
+- Uses the newest installed Python that meets Medusa's minimum version (`requires-python`). Install a newer Python package from Package Center or SynoCommunity if Medusa's minimum goes up.
+- Medusa runs under a small supervisor, so **Restart** and **Update Now** in the web UI relaunch Medusa (re-picking the Python) instead of hanging. Medusa's **Shutdown** button also restarts Medusa; stop it from Package Center.
+- Requires the Git Server package.
+- Log of the supervisor: `/var/packages/medusa/var/supervisor.log`
 
-### To run the script via task scheduler
+Medusa is on port 8897. Runs as `sc-medusa:synocommunity`, same as BenjV's package, so your existing config and database are kept when upgrading.
 
-See [How to run from task scheduler](https://github.com/007revad/Medusa/blob/main/how_to_run_from_scheduler.md)
+Available for DSM 7 and DSM 6. 
 
-### To run the script via SSH
+Requires git and python 12 or later.
 
-[How to enable SSH and login to DSM via SSH](https://kb.synology.com/en-global/DSM/tutorial/How_to_login_to_DSM_with_root_permission_via_SSH_Telnet)
+### How to install the package
 
-```YAML
-sudo -s /volume1/scripts/SCRIPT_NAME.sh
-```
+There are 2 ways to install the package:
 
-**Note:** Replace /volume1/scripts/ with the path to where the script is located.
+**Directly from Package Center**
 
-### Troubleshooting
+1. Add [007revad Synology Package Source](https://github.com/007revad/Synology_package_source) to package Center.
+2. Click on the Community section in Package Center and install the package.
 
-If the script won't run check the following:
+<p align="center"><kbd><img src="/images/pkg_center.png"></kbd></p>
 
-1. Make sure you download the zip file and unzipped it to a folder on your Synology (not on your computer).
-2. If the path to the script contains any spaces you need to enclose the path/scriptname in double quotes:
-   ```YAML
-   sudo -s "/volume1/my scripts/SCRIPT_NAME.sh"
-   ```
-3. Make sure you unpacked the zip or rar file that you downloaded and are trying to run the SCRIPT_NAME.sh file.
-4. Set the script file as executable:
-   ```YAML
-   sudo chmod +x "/volume1/scripts/SCRIPT_NAME.sh"
-   ```
+**Or download the package and install it manually**
+1. Download the latest version .spk file from https://github.com/007revad/Syno_Toolbox/releases and save it to your Synology.
+2. In Package Center click on Manual Install.
+3. Browse to where you downloaded the .spk file.
+4. Select the .spk file and click Next.
 
 ### Screenshots
 
