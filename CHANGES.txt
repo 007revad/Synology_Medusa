@@ -1,13 +1,14 @@
 v3.0.1
-- The install and upgrade wizards now explain that sc-medusa needs Read/Write permission on your tv-shows and download shared folders.
-- Added DSM package.
+- Added install and upgrade wizards that explain that the sc-medusa system user needs Read/Write permission on your tv-shows and download shared folders.
+- Added DSM 6 package.
 
 v3.0.0
 - First release of 007revad's Medusa package. Upgrades over BenjV's Medusa package and keeps your existing config, database and cache.
 - Requires SynoCommunity Git and Python 3.14 packages.
 - Medusa is cloned from GitHub, so Medusa's "Update Now" keeps working.
 - Bug fix for "Sorry, requires Python 3.10 and above". The newest installed Python that meets Medusa's minimum version is now used (Python 3.9 is no longer supported).
-- Bug fix for Medusa's web UI "Restart" and "Update Now" hanging on "Performing Restart". Medusa is now run by a small supervisor, which picks the Python version again each time Medusa restarts.
+- Bug fix for Medusa's web UI "Restart" and "Update Now" hanging on "Performing Restart".
+- Medusa is now run by a small supervisor, which picks the Python version again each time Medusa restarts.
 - Medusa's "Shutdown" button now restarts Medusa instead of stopping it. Use Package Center to stop Medusa.
 - Package Center no longer shows a "Send Term signal to package" message when stopping Medusa.
 - The supervisor's log is saved in the package's var folder as supervisor.log.

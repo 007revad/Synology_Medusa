@@ -11,7 +11,7 @@
 
 Medusa is a self-hosted automatic video library manager for TV shows. It monitors configured shows, searches supported Usenet and torrent providers, sends releases to configured download clients, and organizes completed episodes with configurable metadata, subtitles, and post-processing.
 
-[Medusa](https://github.com/pymedusa/Medusa) package for Synology DSM 7, which upgrades BenjV's Medusa package.
+[Medusa](https://github.com/pymedusa/Medusa) package for Synology DSM 7 and 6, which upgrades BenjV's Medusa package.
 
 - Medusa is cloned from GitHub, so Medusa's own **Update Now** works.
 - Uses the newest installed Python that meets Medusa's minimum version (`requires-python`). The package depends on the SynoCommunity `python314` package, which leaves room for Medusa's minimum to rise.

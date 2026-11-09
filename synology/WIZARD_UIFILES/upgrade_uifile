@@ -1,7 +1,7 @@
 [{
   "step_title": "Upgrade of Medusa",
   "items": [{
-    "desc": "Source:&emsp;<b>https://github.com/pymedusa/Medusa</b> (master branch)<br>Port used: <b>8897</b><br>Your existing Medusa settings and database are kept."
+    "desc": "Source:&emsp; <b>https://github.com/pymedusa/Medusa</b> (master branch)<br>Port used: <b>8897</b><br>Your existing Medusa settings and database are kept."
   }, {
     "desc": "This package runs under the <i>hidden</i> system user <b>sc-medusa</b>.<br>If Medusa cannot see a folder, check that <b>sc-medusa</b> has <b>Read/Write</b> access to that shared folder in <b>Control Panel &gt; Shared Folder &gt; Edit &gt; Permissions &gt; System internal user</b>."
   }]

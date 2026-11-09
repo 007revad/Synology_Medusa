@@ -1,10 +1,12 @@
 [{
   "step_title": "Installation of Medusa",
   "items": [{
-    "desc": "Source:&emsp;<b>https://github.com/pymedusa/Medusa</b> (master branch)<br>Port used: <b>8897</b><br>Medusa updates itself from the Medusa web UI (Update Now)."
+    "desc": "Source:&emsp; <b>https://github.com/pymedusa/Medusa</b> (master branch)<br>Port used: <b>8897</b><br>Medusa updates itself from the Medusa web UI (Update Now)."
   }, {
-    "desc": "This package runs under the <i>hidden</i> system user <b>sc-medusa</b>. It does not appear in most DSM user settings.<br><br><b>Important!!</b><br>Medusa can only see the shared folders that <b>sc-medusa</b> has been given access to.<br>In DSM go to <b>Control Panel &gt; Shared Folder</b>, select your TV show and download folders, click <b>Edit &gt; Permissions</b>, change the drop-down to <b>System internal user</b> and give <b>sc-medusa</b> <b>Read/Write</b> access."
+    "desc": "This package runs under the <i>hidden</i> system user <b>sc-medusa</b>. It does not appear in most DSM user settings."
   }, {
-    "desc": "Medusa needs the <b>Git Server</b> package and Python 3.14 (the SynoCommunity <b>python314</b> package), which are listed as dependencies in Package Center."
+    "desc": "<b>Important!</b><br>Medusa can only see the shared folders that <b>sc-medusa</b> has been given access to.<br>In DSM go to <b>Control Panel &gt; Shared Folder</b>, select your TV show and download folders, click <b>Edit &gt; Permissions</b>, change the drop-down to <b>System internal user</b> and give <b>sc-medusa</b> <b>Read/Write</b> access."
+  }, {
+    "desc": "Medusa needs the <b>Git</b> and <b>Python 3.14</b> packages from SynoCommunity, which are listed as dependencies in Package Center."
   }]
 }]
