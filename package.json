@@ -2,7 +2,7 @@
   "package": "medusa",
   "name": "medusa",
   "version": "2.5.0",
-  "description": "Medusa is an automatic Video Library Manager for TV Shows. Medusa is cloned from GitHub so it can update itself.",
+  "description": "Medusa is a self-hosted automatic video library manager for TV shows. It monitors configured shows, searches supported Usenet and torrent providers, sends releases to configured download clients, and organizes completed episodes with configurable metadata, subtitles, and post-processing.",
   "target": "./src",
   "install_type": "package",
   "install_dep_packages": "git>=2.31:python314",
