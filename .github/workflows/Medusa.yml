@@ -78,7 +78,7 @@ jobs:
           fi
           grep -q '^arch="noarch"$' "$tmpdir/INFO" || { echo "::error::arch not set to noarch"; exit 1; }
           grep -q '^adminport="8897"$' "$tmpdir/INFO" || { echo "::error::adminport not set"; exit 1; }
-          grep -q '^install_dep_packages="git>=2.31"$' "$tmpdir/INFO" || { echo "::error::install_dep_packages not set"; exit 1; }
+          grep -q '^install_dep_packages="git>=[2-9].[3-9][0-9]:python' "$tmpdir/INFO" || { echo "::error::install_dep_packages not set"; exit 1; }
           cat "$tmpdir/INFO"
           version="${{ steps.get_latest_tag.outputs.new_tag }}"
           out="./dist/${SPK_PREFIX}-${version}-noarch-DSM-7.x.spk"

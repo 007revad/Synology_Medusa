@@ -19,6 +19,7 @@ jobs:
   build-test-spk:
     name: Build Test Package
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -32,6 +33,8 @@ jobs:
           fi
           echo "new_tag=$test_tag" >> $GITHUB_OUTPUT
 
+      # Medusa is pure Python so one package works on every architecture.
+      # Build for kvmx64 then change INFO to noarch.
       - name: Synology Package Builder Github Action
         uses: 007revad/synology-package-builder@main
         with:
@@ -47,14 +50,19 @@ jobs:
           tmpdir=$(mktemp -d)
           tar -xf "$spk" -C "$tmpdir"
           sed -i 's/^arch=".*"/arch="noarch"/' "$tmpdir/INFO"
+          # Settings the package builder has no package.json key for
           grep -q '^adminport=' "$tmpdir/INFO" || echo 'adminport="8897"' >> "$tmpdir/INFO"
           grep -q '^adminprotocol=' "$tmpdir/INFO" || echo 'adminprotocol="http"' >> "$tmpdir/INFO"
           grep -q '^checkport=' "$tmpdir/INFO" || echo 'checkport="no"' >> "$tmpdir/INFO"
+          # Git is needed to clone and update Medusa
           if grep -q '^install_dep_packages=' "$tmpdir/INFO"; then
             sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31:python314"/' "$tmpdir/INFO"
           else
             echo 'install_dep_packages="git>=2.31:python314"' >> "$tmpdir/INFO"
           fi
+          grep -q '^arch="noarch"$' "$tmpdir/INFO" || { echo "::error::arch not set to noarch"; exit 1; }
+          grep -q '^adminport="8897"$' "$tmpdir/INFO" || { echo "::error::adminport not set"; exit 1; }
+          grep -q '^install_dep_packages="git>=[2-9].[3-9][0-9]:python' "$tmpdir/INFO" || { echo "::error::install_dep_packages not set"; exit 1; }
           cat "$tmpdir/INFO"
           out="./dist/${SPK_PREFIX}-${{ steps.get_tag.outputs.new_tag }}-noarch-DSM-7.x.spk"
           rm -f ./dist/*.spk
