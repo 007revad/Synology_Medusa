@@ -13,10 +13,17 @@
 # across Medusa restarts and DSM never sees the package as stopped.
 
 PKGS_DIR="/var/packages"
-PIDFILE="${SYNOPKG_PKGVAR}/${SYNOPKG_PKGNAME}.pid"      # supervisor pid
-CHILDFILE="${SYNOPKG_PKGVAR}/${SYNOPKG_PKGNAME}.child"  # Medusa pid
-SUPLOG="${SYNOPKG_PKGVAR}/supervisor.log"
-CONFIG="${SYNOPKG_PKGVAR}/config.ini"
+# DSM 7 has a var folder. DSM 6 only has target and etc.
+PKG_NAME="${SYNOPKG_PKGNAME}"
+VAR_DIR="/var/packages/${PKG_NAME}/var"
+dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion 2>/dev/null)
+if [ -n "$dsm" ] && [ "$dsm" -lt 7 ]; then
+    VAR_DIR="/var/packages/${PKG_NAME}/etc"
+fi
+PIDFILE="${VAR_DIR}/${SYNOPKG_PKGNAME}.pid"      # supervisor pid
+CHILDFILE="${VAR_DIR}/${SYNOPKG_PKGNAME}.child"  # Medusa pid
+SUPLOG="${VAR_DIR}/supervisor.log"
+CONFIG="${VAR_DIR}/config.ini"
 SRC="${SYNOPKG_PKGDEST}/src"
 STARTMODULE="${SRC}/start.py"
 TIMEOUT=30           # Seconds to wait for Medusa to shut down
@@ -128,7 +135,7 @@ supervise() {
     log "Starting Medusa with ${PYTHON} (Python ${PY_VER}, minimum ${MIN_VER})"
     START=$(date +%s)
     env LANG=en_US.UTF-8 "${PYTHON}" "${STARTMODULE}" -q --nolaunch \
-      --datadir="${SYNOPKG_PKGVAR}" --port="${SYNOPKG_PKGPORT}" \
+      --datadir="${VAR_DIR}" --port="${SYNOPKG_PKGPORT}" \
       < /dev/null >> "$SUPLOG" 2>&1 &
     CHILD=$!
     echo "$CHILD" > "$CHILDFILE"

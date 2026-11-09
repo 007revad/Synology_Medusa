@@ -1,7 +1,15 @@
 #!/bin/sh
+# DSM 7 has a var folder. DSM 6 only has target and etc.
+PKG_NAME="${SYNOPKG_PKGNAME}"
+VAR_DIR="/var/packages/${PKG_NAME}/var"
+dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion 2>/dev/null)
+if [ -n "$dsm" ] && [ "$dsm" -lt 7 ]; then
+    VAR_DIR="/var/packages/${PKG_NAME}/etc"
+fi
+
 if [ "${SYNOPKG_OLD_PKGVER%%.*}" -lt 2 ]
 then
   printf "%s %s\tupgrade %s Restore the potential data from pre DSM 7 packages\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
-  mv -f "${SYNOPKG_TEMP_UPGRADE_FOLDER}"/* "${SYNOPKG_PKGVAR}"
+  mv -f "${SYNOPKG_TEMP_UPGRADE_FOLDER}"/* "${VAR_DIR}"
 fi
 exit 0

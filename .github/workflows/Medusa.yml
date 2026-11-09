@@ -81,17 +81,42 @@ jobs:
           grep -q '^install_dep_packages="git>=[2-9].[3-9][0-9]:python' "$tmpdir/INFO" || { echo "::error::install_dep_packages not set"; exit 1; }
           cat "$tmpdir/INFO"
           version="${{ steps.get_latest_tag.outputs.new_tag }}"
+          # The release tag must match the version in INFO (package.json), or
+          # the spkrepo and Package Center show the wrong version
+          if ! grep -q "^version=\"${version#v}\"" "$tmpdir/INFO"; then
+            echo "::error::INFO version does not match release tag ${version}. Did you update package.json?"
+            exit 1
+          fi
           out="./dist/${SPK_PREFIX}-${version}-noarch-DSM-7.x.spk"
           rm -f ./dist/*.spk
           tar -cf "$out" -C "$tmpdir" $(ls "$tmpdir")
           rm -rf "$tmpdir"
           ls -l ./dist
 
+      # Same package for DSM 6. Only INFO changes (DSM 6 has etc instead of var,
+      # which the package scripts handle).
+      - name: Create noarch package for DSM 6
+        if: steps.check_assets.outputs.spk_count == '0'
+        run: |
+          set -euo pipefail
+          for f in ./dist/${SPK_PREFIX}-*-noarch-DSM-7.x.spk; do
+            dsm6="${f/DSM-7.x/DSM-6.x}"
+            tmpdir=$(mktemp -d)
+            tar -xf "$f" -C "$tmpdir"
+            sed -i -E 's/^os_min_ver=".*"/os_min_ver="6.0-7321"/' "$tmpdir/INFO"
+            sed -i -E 's/^os_max_ver=".*"/os_max_ver="6.9-99999"/' "$tmpdir/INFO"
+            grep -q '^os_min_ver="6.0-7321"$' "$tmpdir/INFO" || { echo "::error::DSM 6 os_min_ver not set"; exit 1; }
+            grep -q '^os_max_ver="6.9-99999"$' "$tmpdir/INFO" || { echo "::error::DSM 6 os_max_ver not set"; exit 1; }
+            tar -cf "$dsm6" -C "$tmpdir" $(ls "$tmpdir")
+            rm -rf "$tmpdir"
+          done
+          ls -l ./dist
+
       - name: Upload Package
         if: steps.check_assets.outputs.spk_count == '0'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.SPK_PREFIX }}-noarch-DSM-7.x
+          name: ${{ env.SPK_PREFIX }}-noarch
           path: ./dist/*.spk
 
       - name: Release

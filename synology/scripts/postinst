@@ -2,7 +2,16 @@
 # Medusa is cloned from GitHub so Medusa's own "Update Now" works.
 REPOSITORY="https://github.com/pymedusa/Medusa.git"
 LOCATION="${SYNOPKG_PKGDEST}/src"
-CONFIGFILE="${SYNOPKG_PKGVAR}/config.ini"
+# DSM 7 has a var folder. DSM 6 only has target and etc.
+PKG_NAME="${SYNOPKG_PKGNAME}"
+VAR_DIR="/var/packages/${PKG_NAME}/var"
+dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion 2>/dev/null)
+if [ -n "$dsm" ] && [ "$dsm" -lt 7 ]; then
+    VAR_DIR="/var/packages/${PKG_NAME}/etc"
+fi
+
+CONFIGFILE="${VAR_DIR}/config.ini"
+
 GIT="/var/packages/git/target/bin/git"
 STAMP="$(date +"%Y/%m/%d %T") ${SYNOPKG_PKGNAME}"
 

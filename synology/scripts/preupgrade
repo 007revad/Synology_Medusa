@@ -1,10 +1,18 @@
 #!/bin/sh
 # If we upgrade from a pre DSM 7 version of the package we save the database, config and cache.
+# DSM 7 has a var folder. DSM 6 only has target and etc.
+PKG_NAME="${SYNOPKG_PKGNAME}"
+VAR_DIR="/var/packages/${PKG_NAME}/var"
+dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion 2>/dev/null)
+if [ -n "$dsm" ] && [ "$dsm" -lt 7 ]; then
+    VAR_DIR="/var/packages/${PKG_NAME}/etc"
+fi
+
 if [ "${SYNOPKG_OLD_PKGVER%%.*}" -lt 2 ]
 then
   # we don't want to save the sources so we remove that folder.
   printf "%s %s\tupgrade %s Save the pre DSM 7 database and config\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
-  rm -rf "${SYNOPKG_PKGDEST}"/var/src
-  mv -f "${SYNOPKG_PKGDEST}"/var/*.* "${SYNOPKG_TEMP_UPGRADE_FOLDER}"
+  rm -rf "${VAR_DIR}"/src
+  mv -f "${VAR_DIR}"/*.* "${SYNOPKG_TEMP_UPGRADE_FOLDER}"
 fi
 exit 0

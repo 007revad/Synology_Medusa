@@ -42,6 +42,17 @@ Installing from a package source means Package Center will notify you when there
 4. Browse to where you downloaded the .spk file.
 5. Select the .spk file and click Next.
 
+## Permissions
+
+Medusa runs as the hidden system user `sc-medusa`, and can only see the shared folders that user has been given access to.
+
+1. In DSM go to Control Panel > Shared Folder.
+2. Select a folder that holds your TV shows or downloads and click Edit > Permissions.
+3. Change the drop-down to **System internal user** and give `sc-medusa` **Read/Write**.
+4. Repeat for each shared folder Medusa needs, then browse to it in Medusa.
+
+<p align="center"><kbd><img src="/images/permissions.png"></kbd></p>
+
 ### Screenshots
 
 <!--- <p align="center">Description of image 2 goes here</p> --->

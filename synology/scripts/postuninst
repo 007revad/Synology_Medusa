@@ -1,10 +1,18 @@
 #!/bin/sh
 # Only delete the user's data if they chose to in the uninstall wizard.
 # An upgrade (SYNOPKG_PKG_STATUS=UPGRADE) never deletes anything.
+# DSM 7 has a var folder. DSM 6 only has target and etc.
+PKG_NAME="${SYNOPKG_PKGNAME}"
+VAR_DIR="/var/packages/${PKG_NAME}/var"
+dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion 2>/dev/null)
+if [ -n "$dsm" ] && [ "$dsm" -lt 7 ]; then
+    VAR_DIR="/var/packages/${PKG_NAME}/etc"
+fi
+
 printf "%s %s\tpostuninst: status='%s' wizard_delete_data='%s'\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKG_STATUS:-}" "${wizard_delete_data:-}"
 if [ "${SYNOPKG_PKG_STATUS}" = "UNINSTALL" ] && [ "${wizard_delete_data}" = "true" ]; then
   printf "%s %s\tuninstall %s Removing FHS folders\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
-  rm -fr "${SYNOPKG_PKGVAR}"
+  rm -fr "${VAR_DIR}"
   rm -fr "${SYNOPKG_PKGHOME}"
   rm -fr "${SYNOPKG_PKGDEST_VOL}/@appconf/${SYNOPKG_PKGNAME}"
 fi
