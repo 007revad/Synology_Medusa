@@ -1,6 +1,8 @@
 #!/bin/sh
-# Don't delete the user's data when DSM is only upgrading the package
-if [ "${SYNOPKG_PKG_STATUS}" = "UNINSTALL" ]; then
+# Only delete the user's data if they chose to in the uninstall wizard.
+# An upgrade (SYNOPKG_PKG_STATUS=UPGRADE) never deletes anything.
+printf "%s %s\tpostuninst: status='%s' wizard_delete_data='%s'\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKG_STATUS:-}" "${wizard_delete_data:-}"
+if [ "${SYNOPKG_PKG_STATUS}" = "UNINSTALL" ] && [ "${wizard_delete_data}" = "true" ]; then
   printf "%s %s\tuninstall %s Removing FHS folders\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${SYNOPKG_PKGVER}"
   rm -fr "${SYNOPKG_PKGVAR}"
   rm -fr "${SYNOPKG_PKGHOME}"

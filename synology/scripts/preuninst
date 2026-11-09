@@ -1,2 +1,3 @@
 #!/bin/sh
+printf "%s %s\tpreuninst: wizard_delete_data='%s' wizard_keep_data='%s'\n" "$(date +"%Y/%m/%d %T")" "${SYNOPKG_PKGNAME}" "${wizard_delete_data:-}" "${wizard_keep_data:-}"
 exit 0
