@@ -20,10 +20,6 @@
 
 Medusa is on port 8897. Runs as `sc-medusa:synocommunity`, same as BenjV's package, so your existing config and database are kept when upgrading.
 
-Available for DSM 7 and DSM 6. 
-
-Requires git and python 12 or later.
-
 ### How to install the package
 
 There are 2 ways to install the package:
