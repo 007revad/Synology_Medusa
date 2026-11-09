@@ -13,9 +13,9 @@
 [Medusa](https://github.com/pymedusa/Medusa) package for Synology DSM 7, which upgrades BenjV's Medusa package.
 
 - Medusa is cloned from GitHub, so Medusa's own **Update Now** works.
-- Uses the newest installed Python that meets Medusa's minimum version (`requires-python`). Install a newer Python package from Package Center or SynoCommunity if Medusa's minimum goes up.
+- Uses the newest installed Python that meets Medusa's minimum version (`requires-python`). The package depends on the SynoCommunity `python314` package, which leaves room for Medusa's minimum to rise.
 - Medusa runs under a small supervisor, so **Restart** and **Update Now** in the web UI relaunch Medusa (re-picking the Python) instead of hanging. Medusa's **Shutdown** button also restarts Medusa; stop it from Package Center.
-- Requires the Git Server package.
+- Requires the SynoCommunity Git and Python 3.14 packages.
 - Log of the supervisor: `/var/packages/medusa/var/supervisor.log`
 
 Medusa is on port 8897. Runs as `sc-medusa:synocommunity`, same as BenjV's package, so your existing config and database are kept when upgrading.
@@ -28,18 +28,20 @@ Requires git and python 12 or later.
 
 There are 2 ways to install the package:
 
-**Directly from Package Center**
+**Directly from Package Center (recommended)**
 
-1. Add [007revad Synology Package Source](https://github.com/007revad/Synology_package_source) to package Center.
-2. Click on the Community section in Package Center and install the package.
+Installing from a package source means Package Center will notify you when there is a Medusa package update.
 
-<p align="center"><kbd><img src="/images/pkg_center.png"></kbd></p>
+1. Add [007revad Synology Package Source](https://github.com/007revad/Synology_package_source) to Package Center.
+2. Add the SynoCommunity package source too, as Medusa needs its 'Git' and 'Python 3.14' packages. The easy way is to install Package Source Manager, which can add SynoCommunity (and other sources) to Package Center for you.
+3. Click on the Community section in Package Center and install Medusa.
 
 **Or download the package and install it manually**
-1. Download the latest version .spk file from https://github.com/007revad/Syno_Toolbox/releases and save it to your Synology.
-2. In Package Center click on Manual Install.
-3. Browse to where you downloaded the .spk file.
-4. Select the .spk file and click Next.
+1. Install the 'Git' and 'Python 3.14' packages from [SynoCommunity](https://synocommunity.com).
+2. Download the latest version .spk file from https://github.com/007revad/Syno_Medusa/releases and save it to your Synology.
+3. In Package Center click on Manual Install.
+4. Browse to where you downloaded the .spk file.
+5. Select the .spk file and click Next.
 
 ### Screenshots
 

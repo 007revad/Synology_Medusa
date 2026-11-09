@@ -72,9 +72,9 @@ jobs:
           grep -q '^checkport=' "$tmpdir/INFO" || echo 'checkport="no"' >> "$tmpdir/INFO"
           # Git is needed to clone and update Medusa
           if grep -q '^install_dep_packages=' "$tmpdir/INFO"; then
-            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31"/' "$tmpdir/INFO"
+            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31:python314"/' "$tmpdir/INFO"
           else
-            echo 'install_dep_packages="git>=2.31"' >> "$tmpdir/INFO"
+            echo 'install_dep_packages="git>=2.31:python314"' >> "$tmpdir/INFO"
           fi
           grep -q '^arch="noarch"$' "$tmpdir/INFO" || { echo "::error::arch not set to noarch"; exit 1; }
           grep -q '^adminport="8897"$' "$tmpdir/INFO" || { echo "::error::adminport not set"; exit 1; }

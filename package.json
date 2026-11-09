@@ -5,7 +5,7 @@
   "description": "Medusa is an automatic Video Library Manager for TV Shows. Medusa is cloned from GitHub so it can update itself.",
   "target": "./src",
   "install_type": "package",
-  "install_dep_packages": "git>=2.31",
+  "install_dep_packages": "git>=2.31:python314",
   "support_conf_folder": "yes",
   "synology": {
     "maintainer": "Medusa development team",
@@ -20,7 +20,7 @@
     "dsmuidir": "ui",
     "thirdparty": "yes",
     "beta": "no",
-    "install_dep_packages": "git>=2.31",
+    "install_dep_packages": "git>=2.31:python314",
     "displayname": "Medusa",
     "displayname_enu": "Medusa",
     "displayname_cht": "Medusa",

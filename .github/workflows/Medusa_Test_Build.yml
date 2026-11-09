@@ -51,9 +51,9 @@ jobs:
           grep -q '^adminprotocol=' "$tmpdir/INFO" || echo 'adminprotocol="http"' >> "$tmpdir/INFO"
           grep -q '^checkport=' "$tmpdir/INFO" || echo 'checkport="no"' >> "$tmpdir/INFO"
           if grep -q '^install_dep_packages=' "$tmpdir/INFO"; then
-            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31"/' "$tmpdir/INFO"
+            sed -i 's/^install_dep_packages=.*/install_dep_packages="git>=2.31:python314"/' "$tmpdir/INFO"
           else
-            echo 'install_dep_packages="git>=2.31"' >> "$tmpdir/INFO"
+            echo 'install_dep_packages="git>=2.31:python314"' >> "$tmpdir/INFO"
           fi
           cat "$tmpdir/INFO"
           out="./dist/${SPK_PREFIX}-${{ steps.get_tag.outputs.new_tag }}-noarch-DSM-7.x.spk"
