@@ -33,6 +33,8 @@ Installing from a package source means Package Center will notify you when there
 2. Add the SynoCommunity package source too, as Medusa needs its 'Git' and 'Python 3.14' packages. The easy way is to install Package Source Manager, which can add SynoCommunity (and other sources) to Package Center for you.
 3. Click on the Community section in Package Center and install Medusa.
 
+<p align="center"><kbd><img src="/images/pkg_center.png"></kbd></p>
+
 **Or download the package and install it manually**
 1. Install the 'Git' and 'Python 3.14' packages from [SynoCommunity](https://synocommunity.com).
 2. Download the latest version .spk file from https://github.com/007revad/Synology_Medusa/releases and save it to your Synology.
@@ -42,10 +44,10 @@ Installing from a package source means Package Center will notify you when there
 
 ### Screenshots
 
-<!--- <p align="center">Description of image 1 goes here</p> --->
-<p align="center"><kbd><img src="/images/IMAGE_NAME.png"></kbd></p>
+<!--- <p align="center">Description of image 2 goes here</p> --->
+<p align="center"><kbd><img src="/images/installed.png"></kbd></p>
 
 <br>
 
 <!--- <p align="center">Description of image 2 goes here</p> --->
-<p align="center"><kbd><img src="/images/IMAGE_NAME.png"></kbd></p>
+<p align="center"><kbd><img src="/images/medusa_ui.png"></kbd></p>
