@@ -31,5 +31,5 @@ if [ ! -f "${CONFIGFILE}" ]; then
   printf "[General]\nweb_port = %s\n[TORRENT]\ntorrent_username = admin\n" "${SYNOPKG_PKGPORT}" > "${CONFIGFILE}"
 fi
 
-printf "<br>%s version: %s installed successfully" "${SYNOPKG_PKGNAME}" "${VERSION#\#\# }" > "${SYNOPKG_TEMP_LOGFILE}"
+printf "<br>Medusa package %s installed successfully.<br>Medusa's own version is %s" "${SYNOPKG_PKGVER}" "${VERSION#\#\# }" > "${SYNOPKG_TEMP_LOGFILE}"
 exit 0

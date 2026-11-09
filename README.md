@@ -34,7 +34,7 @@ Installing from a package source means Package Center will notify you when there
 
 **Or download the package and install it manually**
 1. Install the 'Git' and 'Python 3.14' packages from [SynoCommunity](https://synocommunity.com).
-2. Download the latest version .spk file from https://github.com/007revad/Syno_Medusa/releases and save it to your Synology.
+2. Download the latest version .spk file from https://github.com/007revad/Synology_Medusa/releases and save it to your Synology.
 3. In Package Center click on Manual Install.
 4. Browse to where you downloaded the .spk file.
 5. Select the .spk file and click Next.
